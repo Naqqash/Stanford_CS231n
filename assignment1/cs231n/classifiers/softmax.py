@@ -29,12 +29,37 @@ def softmax_loss_naive(W, X, y, reg):
   # here, it is easy to run into numeric instability. Don't forget the        #
   # regularization!                                                           #
   #############################################################################
-  pass
-  #############################################################################
-  #                          END OF YOUR CODE                                 #
-  #############################################################################
+  
+  num_dims = W.shape[0]
+  num_classes = W.shape[1]
+  num_train = X.shape[0]
+  prob_scores = np.zeros((num_classes,1))
 
+  for i in xrange(num_train):
+    
+    scores = X[i, :].dot(W) ## calculating the scores as X.W
+    scores -= np.max(scores)
+    exp_scores = np.exp(scores) 
+
+    prob_scores = exp_scores/np.sum(exp_scores) ## calculating the softmax probabilities
+    
+    loss += -np.log(prob_scores[y[i]])
+    
+    prob_scores[y[i]] -= 1 # subracting 1 when classes match
+    
+    dW += np.dot(np.reshape(X[i],(num_dims,1)), np.reshape(prob_scores,(1,num_classes)))
+ 
+  
+  
+  
+ 
+
+  loss /= num_train
+  loss += 0.5 * reg * np.sum(W * W)
+  dW = (1.0/num_train)*dW + reg*W
+  
   return loss, dW
+
 
 
 def softmax_loss_vectorized(W, X, y, reg):
@@ -47,16 +72,25 @@ def softmax_loss_vectorized(W, X, y, reg):
   loss = 0.0
   dW = np.zeros_like(W)
 
-  #############################################################################
-  # TODO: Compute the softmax loss and its gradient using no explicit loops.  #
-  # Store the loss in loss and the gradient in dW. If you are not careful     #
-  # here, it is easy to run into numeric instability. Don't forget the        #
-  # regularization!                                                           #
-  #############################################################################
-  pass
-  #############################################################################
-  #                          END OF YOUR CODE                                 #
-  #############################################################################
+  num_train = X.shape[0]
+
+  scores = np.dot(X, W)
+  exp_scores = np.exp(scores)
+  prob_scores = exp_scores/np.sum(exp_scores, axis=1, keepdims=True)
+    
+  correct_log_probs = -np.log(prob_scores[range(num_train), y])
+
+  loss = np.sum(correct_log_probs)
+  loss /= num_train
+  loss += 0.5 * reg * np.sum(W**2)
+
+  # grads
+  dscores = prob_scores
+  dscores[range(num_train), y] -= 1
+  dW = np.dot(X.T, dscores)
+  dW /= num_train
+  dW += reg * W
+
 
   return loss, dW
 
